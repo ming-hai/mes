@@ -99,6 +99,19 @@ public class ProductStructureTreeService {
         return null;
     }
 
+    private Entity findOperationForProductWithinChildren(final Entity product, final Entity toc) {
+        List<Entity> operations = toc.getHasManyField(TechnologyOperationComponentFields.CHILDREN);
+        for (Entity operation : operations) {
+
+            Entity isResult = operation.getHasManyField(L_OPERATION_PRODUCT_OUT_COMPONENTS).find()
+                    .add(SearchRestrictions.belongsTo(L_PRODUCT, product)).setMaxResults(1).uniqueResult();
+            if (isResult != null) {
+                return operation;
+            }
+        }
+        return null;
+    }
+
     private Entity findTechnologyForProduct(final Entity product) {
         DataDefinition technologyDD = dataDefinitionService.get(TechnologiesConstants.PLUGIN_IDENTIFIER,
                 TechnologiesConstants.MODEL_TECHNOLOGY);
@@ -149,7 +162,7 @@ public class ProductStructureTreeService {
         for (Entity productInComp : productInComponents) {
             Entity child = treeNodeDD.create();
             Entity product = productInComp.getBelongsToField(L_PRODUCT);
-            Entity subOperation = findOperationForProductAndTechnology(product, technology);
+            Entity subOperation = findOperationForProductWithinChildren(product, operation);
             BigDecimal quantity = findQuantityOfProductInOperation(product, operation);
             Entity subTechnology = findTechnologyForProduct(product);
 
